@@ -8,15 +8,22 @@ import dev.agustinventura.playlisthistory.application.port.out.SaveLastPlayedPor
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.support.RestClientAdapter;
+import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 
 @SpringBootApplication
 public class PlayListHistoryApplication {
+
+  private static final Logger logger = LoggerFactory.getLogger(PlayListHistoryApplication.class);
 
   public static void main(String[] args) {
     SpringApplication.run(PlayListHistoryApplication.class, args);
@@ -26,17 +33,26 @@ public class PlayListHistoryApplication {
   public RestClient restClient(@Value("${song-server.base.url}") String baseUrl) {
     return RestClient.builder()
         .baseUrl(baseUrl)
+        .defaultStatusHandler(
+            HttpStatusCode::isError,
+            (request, response) ->
+              logger.error("Response error [code={}, body={}]", response.getStatusCode(), new String(response.getBody().readAllBytes()))
+            )
         .build();
   }
 
   @Bean
   public LoadLastPlayedPort loadLastPlayedPort(RestClient restClient) {
-    return new SongsLocalRepository(restClient);
+    RestClientAdapter adapter = RestClientAdapter.create(restClient);
+    HttpServiceProxyFactory factory = HttpServiceProxyFactory.builderFor(adapter).build();
+    return factory.createClient(SongsLocalRepository.class);
   }
 
   @Bean
   public SaveLastPlayedPort saveLastPlayedPort(RestClient restClient) {
-    return new SongsLocalRepository(restClient);
+    RestClientAdapter adapter = RestClientAdapter.create(restClient);
+    HttpServiceProxyFactory factory = HttpServiceProxyFactory.builderFor(adapter).build();
+    return factory.createClient(SongsLocalRepository.class);
   }
 
   @Bean
