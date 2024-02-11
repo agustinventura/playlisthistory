@@ -1,26 +1,23 @@
 package dev.agustinventura.playlisthistory.adapter.out.rest;
 
 import dev.agustinventura.playlisthistory.application.model.PlayListHistoryItem;
-import dev.agustinventura.playlisthistory.application.port.out.LoadLastPlayedPort;
-import dev.agustinventura.playlisthistory.application.port.out.SaveLastPlayedPort;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.PostExchange;
 
-public interface SongsLocalRepository extends LoadLastPlayedPort, SaveLastPlayedPort {
+public interface SongsLocalRepository {
 
-  @Override
   @GetExchange("/items")
-  List<PlayListHistoryItem> loadLastPlayedSongs();
+  List<PlayListHistoryItem> getAll();
 
-  @Override
   @GetExchange("/items/{id}")
-  Optional<PlayListHistoryItem> loadPlayedSong(@PathVariable String id);
+  Optional<PlayListHistoryItem> getWithId(@PathVariable String id);
 
-  @Override
   @PostExchange("/items")
-  PlayListHistoryItem save(@RequestBody PlayListHistoryItem item);
+  PlayListHistoryItem post(@RequestHeader Map<String, String> headers, @RequestBody PlayListHistoryItem item);
 }
